@@ -265,3 +265,14 @@ hand, remainignDeck := deal(cards, 5)
 * the way to return multiple variables from afunction is to define theirt types in a parentherses after the functionname() and before the brackets.  also we return the variables sepaartade by comma. Order matters and type is static and binding
 * we can declare and assign these variables to external vars in our program as we see. using the := synbtax to assing 2 vars separated by comma. Order Matters here as well
 * extracting ranges from a slice does not alter it .  We created two new references that point at subsections of the 'cards' slice. We never directly modified the slice that 'cards' is pointing at.
+
+### Lecture 23 - Byte Slices
+
+* [ioutil package doc](https://golang.org/pkg/io/ioutil/)
+* we will now move to the saveToFile function. our aim is to take a deck and save its representation to a file on our local drive
+* the WriteFile funct from go standard lib *ioutil* takes a filename and a byte slice []byte. this is known as bytestream or data stream in other langs and a permissions flag of os.FileMode
+* we need to transform our deck a.k.a []string to a []byte to pass it in the file
+* a byteslice is a stream of ascii characters/bytes. so our string is covereted to asn ascii stream
+* "hi there!" => [72 105 32 116 104 101 114 101 33] *string to byteslice*
+
+### Lecture 24 - Deck to String
