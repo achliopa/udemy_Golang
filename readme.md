@@ -157,4 +157,111 @@ func newCard() string {
 
 ### Lecture 16 - Slices and For Loops
 
-* 
+* Go has 2 basic data structs to handle list s of records:
+	* Array: fixed length list of things
+	* Slice: an array that can grow or shrink
+* Slices and arrays must have a defined data type (like in Java or C). So no mix type arrays.
+* in *main.go* we need to find a way to create multiple cards at a time.
+* we create a new variable called cards. we use the := syntax and declare it as a slice
+* the := syntax of declaring a slice is: `name := []type{element1,element2}` e.g `cards := []string{"Card1","Card2"}` declares a slice of type string named cards and initializes it with two strings. instead of literals we can pass in function calls or vars
+* how do add new elements to a slice? The syntax is:  `cards = append(cards, "New Card")` or a general rule could be `slice = append(slice, newElement)`
+* append adds an element to the end of the slice and returns  A NEW slice so essentialy does not modify the existing slice. but the assignement we use is what modifies the originam slice we pass in the append func
+* how do we iterate over a slice?
+
+```
+for i, element := range slice {
+	fmt.Println(i, element)
+}
+```
+
+* index: index of the element in the array
+* element: current element we are iterating over
+* range slice: take the slice and loop over it
+* fmt.Println(i, element): the code that runs on every iteration
+
+* in the for loop syntax we kind of redeclare index and element for each iteration with teh assignement := . this is fien as in each iteration we discard the previous values
+* in go all declared vars must be used to compile , even indexes
+
+### Lecture 17 - OO APproach vs GO approach
+
+* Go is NOT an OO language. there is no notion of classes in go
+* In an OO lang we would build a deck of cards by creating a Deck class. with methods like print(),shuffle() and saveToFile() and an attribute cards to be an array of strings. We would then create a Deck Instance and use this object in our code
+* In GO the way to do it is very different. we work with extending basic types (e.g string,int,float, array, map)
+* what we want to achieve is to extend a base type and add extra functionality to it. e.g we declare in Go an array of strings `type deck []string` and add a bunch of functions specificllly made to work with it.
+* These are functions with deck as *receiver*. A function with a receiver is like a method. a functions that belongs to the instance
+* we will createa separate file for our class like new type to describe what it is and how it works
+* this new *deck.go* file recides in teh same folder as main.go and belongs to same package (package main)
+
+### Lecture 18 - Custom Type Declarations
+
+* we declare the new type `type deck []string` as a slice of type string
+* the immediate effect is that we can replace the `cards := []string{"Ace of Diamonds", newCard()}` in main.go with `cards := deck{"Ace of Diamonds", newCard()}`
+* to get deck.go in mu runtime and not get error of undefined: deck i add deck.go in my go run command ` go run main.go deck.go`
+* so far type deck has no actual value
+* we add a method to id (receiver function)
+
+```
+func (d deck) print() {
+	for i, card := range d {
+		fmt.Println(i, card)
+	}
+}
+```
+
+* this implements the for loop we had in main. it is called as a receiver because it is bound with the deck type. this binding is done with this new syntax style of (varname type) before the functioname.
+* we call this function in the main as a method of the cards variable which was declared of type deck (which has the method). the way to call it is `cards.print()` in a oo style call.
+
+### Lecture 19 - Receiver Functions
+
+* the `(internalvar mytype)` is the reciever on a function `func (internalvar mytype) myfunc() {}`. is what makes the function a receiver function. what is means is that any variable in our app of type mytype has access to this myfunc method. 
+* what reciever does behind the scens is to make avalable the copy of the mytype we are working with available in the myfuc method as a variable called internalvar. also every variable of type mytype can call this function on itself
+* the internalvar is like this in JS. In Go the is a convention to name the internal reference to the reciver type with 1 or 2 leter abbreviation of the type name
+
+### Lecture 20 - Creating a New Deck
+
+* we want to have a method to create anew deck of cards. this in OO would be done witha constructor. but we dont have constuctors. so we can create afunction that re turns the deck type and build the deck in there. 
+* we start by making a new deck var as an empty slice `cards := deck{}`
+* we want to populate this slice with data . we choose to do it with 2 nested for loops
+
+```
+cardSuits := []string{"Spades", "Diamonds", "Hearts", "Clubs"}
+cardValues := []string{"Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"}
+
+for i, suit := range cardSuits {
+	for j, value := range cardValues {
+		cards = append(cards, suit+" of "+value)
+	}
+}
+```
+
+* compiler complains that we declared the indexes i and j and never used them. to make go compiler stop complaining we replace the var name with _. this tells go that this var is not meant ot be used.
+
+* in main.go we replace the old code of instantiating the cards var manually with `cards := newDeck()` and use our deck generator
+
+### Lecture 21 - Slice Range Syntax
+
+* we will go and implement the deal function. we will take an existing deck of cards, take out a number of cards to deal out and create anew deck of the specified size (remainder cardds?). hands and remainder deck will be of same type (deck). essentialy we need to split up the slice
+* slices are zero-indexed. if we want to access a specific elemetn in the slice we use `slice[index]` like in any other lang array. like in  python we can extract a part of the slice with the syntax `slice[startIndexIncluding:stopIndexNotIncluding]` e.gfruits[0:2]. with this we can select a range ina slice.
+* if our startIndex is 0 we can ommit it `slice[:stopindex]` same holds for stopindex `slice[startindex:]`
+* an easy way to solve our dealing problem is to set a handsize var and set hand = cards[:handsize] restpfdeck = cards[handsize:]
+
+### Lecture 22 - Multiple Return Values
+
+* we implement the deal function
+
+```
+func deal(d deck, handSize int) (deck, deck) {
+	return d[:handSize], d[handSize:]
+}
+```
+
+* and call it 
+
+```
+hand, remainignDeck := deal(cards, 5)
+```
+
+* what we see here is how to pass arguments in a function (nothing new) and how to return multiple values from a function (this is Unusual for other langs)
+* the way to return multiple variables from afunction is to define theirt types in a parentherses after the functionname() and before the brackets.  also we return the variables sepaartade by comma. Order matters and type is static and binding
+* we can declare and assign these variables to external vars in our program as we see. using the := synbtax to assing 2 vars separated by comma. Order Matters here as well
+* extracting ranges from a slice does not alter it .  We created two new references that point at subsections of the 'cards' slice. We never directly modified the slice that 'cards' is pointing at.
