@@ -133,4 +133,28 @@ func main() {
 
 ### Lecture 15 - Functions and Return Types
 
+* in a realistic world i dont know before exeuting the program the card i want so i need to make it parametrical passing the card to main through a function call
+* we define a new func *new card* which returns the string. return statement is like any other language
+
+```
+func newCard() {
+	return "Five of Diamonds"
+}
+```
+
+* But there is a Caveat the code above throows an error because in go after the functionb declaration we need to declare the returned variable type. the previous code says we will return nothing but we return a string. Go is statically typed lang . in c++ and java functions are defined as `int main() {}` so there as well we define the return type. just the syntax is different
+
+```
+func newCard() string {
+	return "Five of Diamonds"
+}
+```
+
+* the syntax of function dewclaration is broken like this:
+	`func functionName(argument1, argument2) return var datatype { return variable}`
+* inconsistency between return type declaration and actual data returned throws an error
+* Files in the same package can freely call functions defined in other files. the build order does not matter
+
+### Lecture 16 - Slices and For Loops
+
 * 
