@@ -276,3 +276,255 @@ hand, remainignDeck := deal(cards, 5)
 * "hi there!" => [72 105 32 116 104 101 114 101 33] *string to byteslice*
 
 ### Lecture 24 - Deck to String
+
+* we will use type conversion. type conversion in go is used to take one type of value and turn it into another
+* we do *type conversion* by writing the type that we want+parenthesis+in the parenthesis the value that we have. It is more Value casting not real type casting. `[]byte("Hi there!")`
+* our deck is actually a slice of strings. we have to flatten it out into a string (using join strings)and the covert it to a byteslice
+* we will add a helper function that takes a deck(stringslice) and turns it into a string `func (d deck) toString() string {}`
+* conceptual it is preferable to be formed as a receiver function (accessory to the deck type)
+
+### Lecture 25 - Joining a Slice of Strings
+	
+* [strings lib doc](https://golang.org/pkg/strings/)
+* we use `[]string(d)` to type convert the decl to stringslice
+* we make use of the *strings* lib to find a readymade Join func we can use. this func takes as argument a stingslice and a char to interpolate between elements while forming the joined string
+
+```
+func (d deck) toString() string {
+	return strings.Join([]string(d), ",")
+}
+```
+
+* the way to import multiple packages/libs in out source file is
+
+```
+import (
+	"fmt"
+	"strings"
+)
+```
+
+### Lecture 26 - Saving Data to the Hard Drive
+
+* our save to file method signature looks like this
+
+```
+func (d deck) saveToFile(filename string) error {
+
+}
+```
+
+* it is a receiver method as we want to attach it to our deck. also it wraps the ioutil WriteFile method so it needs to porvide it with a filename (string). ALso the function it wraps produces an error type. we return it as well as we dont want to implkement error handling there.
+* the completed function looks like
+
+```
+func (d deck) saveToFile(filename string) error {
+	return ioutil.WriteFile(filename, []byte(d.toString()), 0666)
+}
+```
+
+* as a last param WriteFile needs `os.FilePerm` file permissions (UNIX) so we pass a default of 0666.
+* we test our func in main. SUCCESS.
+
+### Lecture 27 - Reading fromn the Hard Drive
+
+* we will make use ReadFIle func from ioutils.  reviewing its signature we see it returns a byteslice AKA string AND and error type 
+* so we need to revverse what we did splitting the byteslice on commas et all.
+* we name our func newDeckFromFile and we dont attach it as a  receiver. its like newDeck() so it will creatrea a deck from afile.
+* we expect a second return value from ReadFile of type error. if all is ok err will have a value of *nil*, if there is an error it will have an error. a common pattern in go is to check for nil on error immediately after returning from the func that might produce it.
+* if statement in go is like any other language w/ bracketrs 
+
+```
+if err != nil {
+	
+}
+```
+
+* error handling in go is up to programmer. apply common sense and ituition, log the rror
+* we make use of Exit() function from *os* package to quit our program. we can pass an error code there (like C) 0 means all ok 1 means error
+* our complete error handling code looks like
+
+```
+if err != nil {
+	// Option 1: log the error and return a call to newDeck()
+	// Option 2: log the error and quit the program
+	fmt.Println("Error:", err)
+	os.Exit(1)
+}
+```
+
+### Lecture 28 - Error Handling
+
+* we need to do the reverse flow to create adeck out of a byte slice. []byte => string => string.split(",") => []string => deck
+* indeed *string* pkg contains a `func Split(s, sep string) []string` that takes the string, the separator string and returns a []string stringslice
+* our complete function looks like
+
+```
+func newDeckFromFile(filename string) deck {
+	bs, err := ioutil.ReadFile(filename)
+	if err != nil {
+		// Option 1: log the error and return a call to newDeck()
+		// Option 2: log the error and quit the program
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
+	s := strings.Split(string(bs), ",")
+	return deck(s)
+}
+```
+
+* we test it in main and it works
+
+### Lecture 29 - Shuffling a Deck
+
+* [Intn doc](https://golang.org/pkg/math/rand/#Intn)
+* we will implement now the shuffle function. it will take a deck and randomize the order
+* standard go lib does NOT have a shuffle a list/slice method. we have to make it
+
+```
+for each index,card in cards
+	Generate a random number between 0 and len(cards) -1
+	swap the current card and the card at cards[randomNumber]
+```
+
+* standard lib has a rand method in math pkg. we use the Intn func that has a 0 -n range
+* our func shuffle will be a receiver function as it is an accessory method of cards
+
+```
+func (d deck) shuffle() {
+	for i := range d {
+		newPosition  := rand.Intn(len(d) -1)
+		d{i], d[newPosition] = d[newPosition], d[i]
+	}
+}
+```
+
+* in the for loop we iterate on the index. we get the new position using the intn rand func and then we swap
+* for swaping we use double assignment. a unique syntax of Go.
+* we test the func and we see that rerunning gets the same results from rand. thi is because we dont seed it with new num.
+
+### Lecture 30 - Random Number Generation
+
+* random num genrerator is a pseudo random generator. it needs a seed
+* in the math/rand doc we see that `type Rand` is a source of random numbers. when we create it using the New() function we pass in a Source type var. this Source type is the seed
+* to make a Source type var we use NewSource() function passing in a int64 seed num
+* to get a random seed we will use *time* package and the current timestamp `func Now()` and pass it into UnixNano() to get a int64 timestamp (not good for crypto)
+* our shuffle method with true randomness
+
+```
+func (d deck) shuffle() {
+	source := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(source)
+
+	for i := range d {
+		newPosition := r.Intn(len(d) - 1)
+		d[i], d[newPosition] = d[newPosition], d[i]
+	}
+}
+```
+
+### Lecture 31 - Testing With Go
+
+* Go testing is no RSpec, mocha, jasmin etc.
+* to make a test on a source file create anew file ending in <sc name>_test.go `deck_test.go`
+* to run all tests in a package, run the command `go test`
+* we create a `deck-test.go` file in our package folder and add boilerplate code `package main`
+
+### Lecture 32 - Writing Useful Tests
+
+* how we decide what to test? we can write tests for our functions in deck.go
+* to see how it words we choose to test the newDeck() method. its up to us to decide what we want to test in this func. we are interested in 3 things (lenght of slice, first element, last element)
+* whnever we identify a function that we want to test out of our code base we are going to create Test<Funcname> for it `TestNewDeck`
+* we can make Test function to test multiple closely related functions. the convention is to chaintheyrnames preseded with Test `func TestSaveToDeckandNewDeckFromFile`
+* how we write test code? e.g code to make sure that a deck is created with x number of cards. Create a new deck => Write if statement to see if the deck has the right number of cards => if it doesn't tell teh go test handler that sthing went wrong
+* writing TestFunctions with capital T is a convention
+* we pass in our test fun a test handler. `func TestNewDeck(t *testing.T) {}`
+* our test file after successfully adding first test looks like
+
+```
+package main
+
+import "testing"
+
+func TestNewDeck(t *testing.T) {
+	d := newDeck()
+
+	if len(d) != 52 {
+		t.Errorf("Expected deck length of 52, but got %v", len(d))
+	}
+}
+```
+
+* its assertion is in the form of if statement.  if the asertion fails we return the T type var setting the error message with its .Errorf method
+
+### Lecture 33 - Asserting Elements in a Slice
+
+* the second test will make sure that eh te first card is an Ace of Spades: Create a NEW deck => write is statemetn to see if the first card in the deck is equal to "Ace of Spades" => if it doesn't tell the go test handler that something went wrong
+* our remaining 2 assertions (2 more tests)
+
+```
+	if d[0] != "Ace of Spades" {
+		t.Errorf("Expected first card of Ace of Spades, but got %v", d[0])
+	}
+
+	if d[len(d)-1] != "King of Clubs" {
+		t.Errorf("Expected first card of King of Clubs, but got %v", d[len(d)-1])
+	}
+```
+
+* go test handler is primitive, so it does not return the number of test passeing or failing. just a general message.
+
+### Lecture 34 - Testing File IO
+
+* we will write a test that creates a deck => saves it to a file => will say file created => attempt to load the file => if it crashes then it will not clean up the created file so that we can reporoduce the test.
+* in go we have to take care of cleaning up ourselves
+* our test will be: testing saveToDeck and newDeckFromFile. the test code wiil: delete any files in current working directory with the name *_decktesting* => create a deck => save to file "_decktesting" => load from file => assert deck length => delete any files in current working directory with the name "_decktesting"
+* we find a delete file func in "os" pkg with name Remove()
+* our new test function name will be *TestSaveToDeckAndNewDeckFromFile*. this name although long is an exact vcopy of the functions it tests so it helps us inthe long term to  trace bugs
+* our complete test
+
+```
+func TestSaveToDeckAndNewDeckFromFile(t *testing.T) {
+	// remove test file
+	os.Remove("_decktesting")
+
+	deck := newDeck()
+	deck.saveToFile("_decktesting")
+
+	loadedDeck := newDeckFromFile("_decktesting")
+
+	if len(loadedDeck) != 52 {
+		t.Errorf("Expected 52 cards in deck, got %v", len(loadedDeck))
+	}
+
+	os.Remove("_decktesting")
+}
+```
+
+### Lecture 35 - Project Review
+
+* Assignemtn solution
+
+```
+package main
+
+import "fmt"
+
+func main() {
+	list := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+	for _, val := range list {
+		if val%2 == 0 {
+			fmt.Printf("%v is even \n", val)
+		} else {
+			fmt.Printf("%v is odd \n", val)
+		}
+	}
+}
+```
+
+## Section 4 - Organizing Data with Structs
+
+### Lecture 36 - Structs in Go
+
+* 
