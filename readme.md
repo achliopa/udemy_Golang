@@ -527,4 +527,198 @@ func main() {
 
 ### Lecture 36 - Structs in Go
 
-* 
+* we go back to our deck game to identify a poitential problem we would face down the road once the project would have been more complex.
+* we used a simple string to represent a card so that the deck was a slice of strings.
+* but from a string its hard to tell what is the suit the card belongs to or the value it has.
+* if we had to build a normal card game that would contain logic depenting on the card value or suit we would need this info to be present
+* in order to solve this issue we could a use instead of a string a data struct (C concept). 
+* Data structure is a collection of preoperties that are related together
+* so a Card Struct Field definition could be: suit -> <string>, value -> <string>
+* a card struct value/instance could be: suit-> "Spades" value -> "Ace"
+* A data struct is equivalent to C struct, JS object, Ruby hash or Python Dictionary
+* to understand the concept of structs in Go we make a small sandbox project called *structs* and add a main.go file for our code
+
+### Lecture 37 - Defining Structs
+
+* we will define a struct to represent a person
+* we must tell go what fields the person struct has. The we can create a new value of type person
+* we define our struct outside of the main function using the syntax (we define a new custon type of type struct)
+
+```
+type person struct {
+	firstName string
+	lastname  string
+}
+```
+
+### Lecture 38 - Declaring Structs
+
+*  The first way of declaring a struct var is `alex := person{"Alex", "Anderson"}`. Thi is not recomended as it depends on the order of field definition in teh struct definition. if the order changes then the field values will be assigned to the wrong field. this is potential source of bugs in the long term
+* The second way uses a key:value systax `alex := person{firstName: "Alex", lastName: "Anderson"}`. This is a safe way as the order of declaring the the struct fields plays no role. 
+* if we print the struct with `fmt.Println(alex)` we get `{Alex Anderson}`
+
+### Lecture 39 - Updating Struct values
+
+* another way to declare a struct instance is shown below. we declare an empty struct with no field assignemnt. fields get zero values "" for strings 0 for nums etc. so essenntialy with `var varname structname` creates an empty struct
+* at second time we assigne the field values using the `struct.field = value` syntax
+
+```
+var alex person //declaration and zero value assignment
+fmt.Println(alex)
+>> { }
+fmt.Printf("%+v/n", alex)
+>> {firstName: lastname:}
+alex.firstName = "Alex"
+alex.lastname = "Anderson"
+fmt.Println(alex)
+>> {Alex Anderson}
+```
+
+* in fromatted string Printf the %+v is a way to print the compete struct (flattened or stringified) with its key value pairs for empty struct alex it prints `{firstName: lastname:}`
+* the second part of the 2step assignemtn of struct field values is the way we update the fields later on in our programs
+
+### Lecture 40 - Embedding Structs
+
+* say we need to embed a struct in the person struct. like contantinfo containd an email(string) and a zipcode(int)
+* we declare a second struct type (the embedded) above the parent one
+* we want each person to have one copy of contactinfo, we embed it by adding a contact field of type contactInfo in the person struct definition
+* we define the new struct and add it in the parent struct definition
+
+```
+type contactInfo struct {
+	email   string
+	zipCode int
+}
+
+type person struct {
+	firstName string
+	lastName  string
+	contact   contactInfo
+}
+```
+
+* we create an instance with the 2nd way of declaring structs. what is new in this syntax is the need for Comma also in the end
+
+```
+jim := person{
+		firstName: "Jim",
+		lastName: "Party",
+		contact: contactInfo{
+			email: "jim@gmail.com",
+			zipCode: 94000,
+		},
+	}
+```
+
+### Lecture 41 - Structs with Receicver Functions
+
+* another equivalent way of embedding a struct. e.g the below embeds with a shorthand syntax. just the struct type. filed name has the same name as the struct type (contactInfo)
+
+```
+type person struct {
+	firstName string
+	lastName  string
+	contactInfo
+}
+```
+
+* in the deck type we defined a number of functions that took deck as a receiver.
+* we can define functions that take structs as receivers e.g 
+
+```
+func (p person) print() {
+	fmt.Printf("%+v", p)
+}
+```
+
+* we write a new receiver func in an attempt to modify the persons.firstname
+
+```
+func (p person) updateName(newFirstName string) {
+	p.firstName = newFirstName
+}
+```
+
+* when we call it in our program in an attempt to modify the persons name it fails to update (it does not breka the program) why?? because like C when we pass a param in a function it creates alocal copy so the changes in the func are made on the local copy. in C thsi is solved with pointers. so if instead we write (p *person) it updates the name
+
+### Lecture 42 - Pass by Value
+
+* some memory insight. address+value. variables like jim point to a mem address whenre the value recides
+* go is pass by value language. when we pass a value in a function go will take all that data an place them in a new address in the memory. so p and jim are different copies of the same struct
+
+### LEcture 43 - Structs with Pointers
+
+* we modify our code to fix the update issue we saw this in Lecture 41 `(p *person)` we pass a pointer to the originam global data struct. now we get a complete C like solution with address (&) and poitner (*)
+
+```
+	...
+	jimPointer := &jim
+	jimPointer.updateName("Jimmy")
+	jim.print()
+}
+
+func (pointerToPerson *person) updateName(newFirstName string) {
+	(*pointerToPerson).firstName = newFirstName
+}
+```
+
+### Lecture 44 - Pointer Operations
+
+* `jimPointer := &jim` assigns the address of var jim in the memory to the var jimPointer (a pointer var therefore pointing to a mem address)
+* `(pointerToPerson *person)` passes as a parameter a pointer var or a mem adrdress of a person struct
+* `(*pointerToPerson).` accesses the data where the poiinter points to modify them
+* pointers have  a datatype as the compiler must now the memsize a pointer refers to (depending on the datatype) to access its data an prevent mem seg faults
+
+* &variable => give me the mem address of the value the variable is pointing at
+* *pointer => give me the value this memory addess is pointing at
+* so jim points to the actual data while jimPointer poitns to the memaddress jim is located
+* `func (pointerToPerson *person) updateName() { *pointerToPErson }`
+	* `*person` thsi is a type description: it means we are working with a pointer to a person datatype
+	* `*pointerToPerson`: this is a n operator - it means we want to manipulate the value the pointer is referencing
+* turn address into value with *address
+* turn value intoo address with &value
+
+### Lecture 45 - Pointer Shortcut
+
+* in go there is a shortcut to proper pointer use (C style)
+* it is actually what we did (by accident in lecture 41 and worked). leave code as is as if we were operating on the actual struct and just pass in the receiver function the pointer to person struct. this works  and its like a hack
+* so we call the method like `jim.updateName("Jimmy")` but we define in the func that we pass the pointer. go will do the converion behind the scenes (this is bad habit though if you are going back to C one day)
+
+### Lecture 46 - Gotchas with Pointers
+
+* we write the following code in [goplayground](https://play.golang.org)
+
+```
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	mySlice := []string{"hi","there","how","are","you"}
+	updateSlice(mySlice)
+	fmt.Println(mySlice)
+}
+
+func updateSlice(s []string) {
+	s[0] = "bye"
+}
+```
+
+* it actual modufies the global slice. how coem? this contradicts with what we said before. (this is because s[index] in C are actually pointers)
+
+### Lecture 47 - Reference vs Value Types
+
+* as we saw in previous lecture structs and slices behave different regarding pointers
+* to represent lists go has arrays and slices. arrays are primitive data struct, cant be resized, rarely used directly. slices can grow and shrink, used 99% of times for lists of elements
+* when we define a slice in Go it internally defines 2 things. 
+	* a slice: a data struct with 3 elements. pointer to head, capacity(num of elements that it can contain) and length (num of elements currently contained)
+	* an actual array with the list of items in memory
+* how this data is stored in memory? the first memoty address sores the slice struct and is what is refered with the var of the slice. ta separate mem addresses store the array. the pointer to head of the slice struct stores the pointer to the array first addr4ess.
+* when we pass a slice to afunction pas svy value principle still holds. but it holds for the slice struct not the array per se. also the pointer to array of the copied slice struct still points to the same array in memory.
+* when we modify the slice data (in its array) in the function we modify the same array the global slice var refers to 
+* in go there are other types that behave like the slice. these are called reference types. so the types are split in two categories
+	* Value Types: int,float,string,bool,structs (use pointers to change these things in a function)
+	* Reference TYpes: slices,maps,channels,pointers,functons (dont worry abount pointers with these)
+* reference tyoe means it is referenceiung an other data struct in memory
