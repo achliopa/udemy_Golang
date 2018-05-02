@@ -722,3 +722,64 @@ func updateSlice(s []string) {
 	* Value Types: int,float,string,bool,structs (use pointers to change these things in a function)
 	* Reference TYpes: slices,maps,channels,pointers,functons (dont worry abount pointers with these)
 * reference tyoe means it is referenceiung an other data struct in memory
+
+## Section 5
+
+### Lecture 48 - What's Map?
+
+* in go a map is a collection of key value pairs (like Python dictionaries, JS object)
+* structs are similar to maps. 
+* both keys and values are statically typed;. all different keys must be of same type and all values of same type
+* we create a new folder named *map* adding a main.go file with boilerplate code
+* we declare a map
+
+```
+	colors := map[string]string{
+		"red":   "#FF0000",
+		"green": "#00FF00",
+		"blue":  "#0000FF",
+	}
+```
+* this is the 1st way of declaring a map. the syntax is `map[<keytype>]<valuetype>{"key":"value",}` . we define the keytype in []and valuetype and then the keyvalue pairs followed by comma. if we println a map we get `map[red:#FF0000 green:#00FF00 blue:#0000FF]`
+
+### Lecture 49 - Manipulating Maps
+
+* there are other 2 ways to declare an empty map. 1st: `var colors map[string]string` 2nd `colors := make(map[string]string)`
+* we can later assign values to teh map with e.g `colors["white"] = "#FFFFFF"`
+* we dont get the structure type of syntax to access map values `structNmae.field`. if we want to access a spcific key value we need to use the square bracket `mapName[<key>]`. this is because the key type is tight. is not dynamic its static
+* to delete a key value pair from a map i use `delete(mapName,<key>)`
+
+### Lecture 50 - Iterating Over Maps
+
+* the way we iterate over a map is very similar to the way we iterate in slices
+
+```
+for key, value := range mapName {
+	// some code to run fore each pair
+	fmt.Println(key, value)
+}
+```
+
+* the way to pas a map in a function `func someFunc(m map[<keytype>]<valuetype>) {}`
+
+### Lecture 51 - Difference between Maps and Structs
+
+* Maps: 
+	* All keys must be the same type
+	* All values must be the same type
+	* Keys are indexed - we can iterate over them
+	* Used to represent a collection of related properties
+	* Dont need to now all the keys at compile time
+	* Reference Type 
+* Structs
+	* Values can be of diferent type
+	* Keys dont support indexing
+	* you need to know all different fields at compile time
+	* used to represent a thing with a lot of different properties
+	* Value Type
+
+## Section 6 - Interfaces
+
+### Lecture 52 - Purpose of Interfaces
+
+*
