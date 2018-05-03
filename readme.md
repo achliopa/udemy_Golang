@@ -786,5 +786,200 @@ for key, value := range mapName {
 ### Lecture 52 - Purpose of Interfaces
 
 * we know that: every value has a type, every function has to specify the type of its arguments.
-* so does that mean? every function we ever write has to be rewritten to accomodate different types even if the logic in it is identical?
-*
+* so does that mean? every function we ever write has to be rewritten to accomodate different types even if the logic in it is identical? we dont like that
+* in the cards project the shuffle function could be used in a variety of other projects with other input types. the inner code is input type agnostic. with the current go knowledge we cannot do it. we have to write a diff function for every input type. this is not DRY code.
+* we will learn how to use the interfaces with a sample project. we will write it with the go knowledge we have and then refactor it to use interfaces.
+* the program will implement two dummy chatboxes. one for english and one for spanish. we expect to have very similar parts of the code between the two and some parts that are different
+* EnglishBot
+	* `type englishBot struct`
+	* `func (englishBot) getGreeting() string` // language specific
+	* `func printGreeting(eb englishBot)` // identical logic
+* SpanishBot
+	* `type spanishBot struct`
+	* `func (spanishBot) getGreeting() string` // lamguage specific
+	* `func printGreeting(sb spanishBot)` //identical logic
+
+### Lecture 53 - Problems Without Interfaces
+
+* we create an new project folder *interfaces* . we add *main.go* file and boilerplate code.
+* we define 2 custom types. englishBot and spanishBot struct.
+* we write 2 receiver functions one for englishBot and one for spanishBot. as the actual receiver type is not used we dot pass the input var just the type so that the compiler does not complain
+
+```
+func (englishBot) getGreeting() string {
+	// very custom logic for generating an english greeting
+	return "Hi there!"
+}
+
+func (spaniishBot) getGreeting() string {
+	// very custom logic for generating an english greeting
+	return "Hola chaval."
+}
+```
+
+* we implement  the 2 printGreeting functions for each type
+
+```
+func printGreeting(eb englishBot) {
+	fmt.Println(eb.getGreeting())
+}
+
+func printGreeting(sb spanishBot) {
+	fmt.Println(sb.getGreeting())
+}
+```
+
+* go starts ccompalining about defining two functions of same name, even though the input types are different. Java supports overloading but Go doesn't
+* we implement although we cannot run it die to the problem we mentioned before.
+
+```
+func main() {
+	eb := englishBot{}
+	sb := spanishBot{}
+
+	printGreeting(eb)
+	printGreeting(sb)
+}
+``` 
+
+* it seems we are desparate to find a way to implement one printGreeting() function that can accept both types 
+
+### Lecture 54 - Interfaces in Practice
+
+* we will refactor our main.go file to use interfaces so that we can have one function for both argument types
+* first we define a new interface type
+
+```
+type bot interface {
+	getGreeting() string
+}
+```
+
+* and we reimplement the function using the interface as argument type
+
+```
+func printGreeting(b bot) {
+	fmt.Println(b.getGreeting())
+}
+```
+
+* our code even after the ddinterface definition still has 2 struct types with their disctinct methods attached to them as receiver functions
+* our program now has a new type called bot (interface)
+* the interface definition we added says that: if there is a type in the program with a function called getGreeting() that returns a string it is a member of the type bot (interface). now that the type structs are members of the interface type bot.we can call the function that gets the interface as argument passing the member type instead.
+* so an ad hoc rule of interfaces is the following: interfaces are custom go types. any type that satisfies the interface spec is a member of it and can be passed in functionswhere the inerface is used as an arg or in any part of code wher interface is used. 
+
+### Lecture 55 - Rules of Interfaces
+
+* the 2 custom type structs satisfy the interface spec because they have a func associated with them (reciever func) witht he same singature as the spec . the expression member of the interface means  that a type is of type bot (interface)
+* we see amore complex interface
+
+```
+type bot interface {
+	getGreeting(string,int) (string,error)
+}
+```
+
+* bot: interface name, getGreeting: function name, (string,int): list of argument types, (string,error) list of return types
+* Interface is a new type clasification. it is a category of its own while the other types (native or custom) are of Concrete Type. 
+* Concrete Type: we can access it, create values out of it
+* Interface TYpe: abstract type, we canot create values of it.
+
+### Lecture 56 - Extra Interface Notes
+
+* interfaces are NOT generic types: other languages have 'generic' types - go does not
+* interfaces are *implicit*:we don't manually have to say that our custom type satisfies an interface
+* Interfaces are a contract to help us manage types: CRAP IN -> CRAP OUT. If our custom type's implementation of a function is broken then interfaces wont help us save it.
+* Interfaces are tough. Step num1 is understand how to read them: Understand how to read interfaces in the standard lib. Writing your own interfraces is tough and requires experience.
+
+### Lecture 57 - The HTTP Interface
+
+* [net/http pkg](https://golang.org/pkg/net/http/)
+* we will build an app using standard lib interfaces to see real world interfaces
+* we will to an http request to google.com and print response to terminal
+* we create a new project folder *http* with the standard boilerplate code
+* we will use the net/http pkg and the func `func Get(url string) (resp *Response, err error)`. outr code looks like
+
+```
+func main() {
+	resp, err := http.Get("http://google.com")
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(resp)
+}
+```
+
+### Lecture 58 - Reading the Docs
+
+* the response we get on terminal is the header. what we want to get is the http body of the response
+* we go back to the function spec in golang pkg docs. the spec says we get a pointer to a response type. we look at it. it is a structs whse fileds we identify in the reply we get printed
+* we see that Body is of type io.ReadCloser which is an interface which contains 2 interfaces Reader and Closer. Reader interface specs a function Read()
+* the hiearchy tree looks like  Redponse Struct -> Body io.ReadCloser Interface-> [Reader io,Reader Interface -> Read([]byte (int,error)) , Closer io.Closer Interface -> Close() (error) ]
+* we see that a filed in a struct is an interface ans a field inan Interface is an Interface
+
+### Lecture 59 - More Interface Syntax
+
+* if we definea struct field as an interface what we say is that the type of this field can be of anytype as long as it fullfils this interface
+* In Go we can assembly Interfaces to an Interface
+
+### Lecture 61 - The Reader Interface
+
+* in a world without interfaces for a list of different sources of input to our program we would need a specialized function for each type to printout the input data to the console
+	* HTTP req body -> []http -> func PrintHTTP([]http)
+	* Text file on HDD -> []string -> func printFile([]string)
+	* Image file on HDD -> jpeg -> func printImage(jpeg)
+* The solution to this madness is the Reader Interface used throughout the stardard Go lib
+* THe purpose of Reader Interface is to accept all this different sources of Input and output a byteslice of data we can use in a uniform way
+* we see that the rREader Interface spec has a `func Read([]byte (int,error) {}`. we see the byteslice passed an argument but as slices are reference type the alternation or filling with data is done internally (no need to output a byteslice)
+
+### Lecture 62 - More on the Reader interface
+
+* to use the benefir of unified code all our sources of inpput must implement the REader Interface aka impelement the REad() function we have seen
+* for our example we dont have to implement the Reader func. the http request body has already done it
+* what we have to do as clients or consumers of the http request body reader method is to create a byteslice and pass it to the REader function of the requestbody. what will happen is that the raw body of the responce will be converted in abyteslice what we can use
+* the output or Reader fuc is an int (the size of data in the slice)
+
+### Lecture 63 - Working with the Read Function
+
+* we will finally use the reader function in our program
+* we create an empty slice `bs := make([]byte,99999)`. we use this new syntax as we want to preset the size of the slice. this is because the Read function does not resize the slice if it gets full. so we pick a fairly large size beforehand
+* the actual code to populate the byteslice with http.request.body data and print it as a string is
+
+```
+resp.Body.Read(bs)
+	fmt.Println(string(bs))
+```
+
+### Lecture 64 - The Writer Interface
+
+* we dont want to create a byteslice everytime we want to read the response.body data from http GET req. we will simplify the code using an other Interface
+* our last 3 lines of code are replaced by `io.Copy(os.Stdout, resp.Body)` which gives the same result
+* the code looks cryptic. what happens behind the scenes is that 2 interfaces work in parallel to achieve the goal. Reader If takes a source of data and puts it in byteslice and Writer If takes the byteslice and ouutputs it to some form of output
+* example sources of output: outgoing http req, text file on HDD, imagefile on HDD, Terminal
+* So we need to search in the Stlib for Types that implement the Writer If and use them
+
+### Lecture 65 - The io.Copy Function
+
+* we look in pkg doc for io.Copy doc to see how it relateto the Writer If. it becomes clear when we see its signature `func Copy(dst Writer, src Reader) (written int64, err error)`
+* Writer If specs the Write() method that takes a byteslices and outputs it somewhere
+* all we need to do is to pass two implementations of the 2 interfaces while doing what we want
+* os.Stdout is a value of File type which implemtns the Write() function and therefore fullfils the Writer If
+
+### Lecture 66 - The Impelementation of io.Copy 
+
+* we look the impelenmtation at the io.go source code file
+* the copyBuffer() we see that defines a byteslice of 32*1024 bytes for general use
+
+### Lecture 67 - A custom Writer
+
+* to stisfy the Writer If we need to implement a type that implemetns the Writer function
+
+```
+func (logWriter) Write(bs []byte) (int, error) {
+	fmt.Println(string(bs))
+	fmt.Println("Just wrote this many bytes: ", len(bs))
+	return len(bs), nil
+}
+```
