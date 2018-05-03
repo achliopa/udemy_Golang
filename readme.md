@@ -157,6 +157,9 @@ func newCard() string {
 
 ### Lecture 16 - Slices and For Loops
 
+<<<<<<< HEAD
+* 
+=======
 * Go has 2 basic data structs to handle list s of records:
 	* Array: fixed length list of things
 	* Slice: an array that can grow or shrink
@@ -784,3 +787,4 @@ for key, value := range mapName {
 
 * we know that: every value has a type, every function has to specify the type of its arguments.
 * so does that mean? every function we ever write has to be rewritten to accomodate different types even if the logic in it is identical?
+*

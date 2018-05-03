@@ -1,5 +1,18 @@
 package main
 
+<<<<<<< HEAD
+import "fmt"
+
+func main() {
+	card := newCard()
+	fmt.Println(card)
+}
+
+func newCard() string {
+	return "Five of Diamonds"
+}
+
+=======
 // import (
 // 	"fmt"
 // )
@@ -32,3 +45,4 @@ func main() {
 	cards.shuffle()
 	cards.print()
 }
+>>>>>>> 32a38f1023120a4342dfa7a63d4819aff92a3456
