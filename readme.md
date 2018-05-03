@@ -782,4 +782,5 @@ for key, value := range mapName {
 
 ### Lecture 52 - Purpose of Interfaces
 
-*
+* we know that: every value has a type, every function has to specify the type of its arguments.
+* so does that mean? every function we ever write has to be rewritten to accomodate different types even if the logic in it is identical?
