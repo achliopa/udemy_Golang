@@ -983,3 +983,63 @@ func (logWriter) Write(bs []byte) (int, error) {
 	return len(bs), nil
 }
 ```
+
+## Section 7 - Channels and Go Routines
+
+### Lecture 68 - Website Status Checker
+
+* the big thing in go programming offer concurrency
+* we will build a program see its problems and add concurrencty to fix them
+* we will build a simple program that will be a status checker for  some common online websites.
+* we will inpout URIs of popular sites and issue http GET requests to them
+* we call the project foilder *channels* and add boilerplate code in there
+* we create a stringslice witht he URI links we want to hit
+
+### Lecture 69 - Printing Site Status
+
+* we added a for loop trhrough the slice. now we will add a functhat takes the link and makes the actual http request
+* our function is simple. we use http.Get() to probe the link . if there is an error or not we print a status.
+* we cal the func from the loop and see it in action
+* what we see is that the order in which we see the status printouts is the same with the order of the links in the slice. so even the requests are async by nature our code is sync and these explains the delay
+
+### Lecture 70 - Serial Link Checking
+
+* our program state machine is like: take the link from slice => make request => http get request travels the web ...delay wait for response => response comes = logit REPEAT for next LINK
+* Our program is serial sequential DELAY
+* we would like to add parallelization to our program, send the requests all together without waiting. and when resplies come rpint them, right away
+* this si where Go routines and channels come into paly
+
+### Lecture 71 - Go Routines
+
+* when we run our program (process) in go we create a MAIN go routine - an engine that takes our compiled  code and executes it line by line
+* the http.Get(link) is a blocking call in our programm an async call which introduces delay. till it returns Main Go ROutine does nothing but wait
+* we want to spawn a new go routine for this call so that our main flow (main go routine) continues to execute.
+* the way to do it is to add the *go* keyword so we call our funct that wraps the blocking call with go infront `go checkLink(link`
+* so a new go routine is executed foe the func checkLink()
+* this new go routine has the blocking call to run so it sits waiting.
+* when it waits the main go routine continues the flow spawning a new go routine (we are in a for loop)
+* Anytime we use the go keyword when launching a function we launch a new go routine and run the called function with this routine. syntax: `go function()`
+
+### Lecture 72 - Theory of Go Routines
+
+* what go routines do on our os when we run them
+* behind the scenes there is the go scheduler. the scheduler works with one cpu core on our machine. even if our machine is quadcore, go will use only one core. so even though we are launching multiple go routines only one is executed at any given time
+* go scheduler monitors the code execution in the routines. when it detects that a go routine finished or makes a blocking call (async) it executes another go routine. in the case of blocking call the waiting routine gets paused
+* so no native parallelism yet. all run on one CPU (go default setting)
+* But go allows us to set it to use more CPU cores (if we have a multicore system). then we get true parallelism. go scheduler run one routine on each logical core
+* In GO world there is a lot of discussion about running on one or multiple cores. the catchphrase is Concurrency is NOT parallelism or COncurrency VS Parallelism
+* Concurrency: we can have multiple threads/routines executing code. if one blocks another one is picked up and worked on
+* Parallelism: Multiple threads executed at the exact same time. Requires multiple cpus. still the ration of cores to threads can be 1 to many. Parallelism is a superset of Concurrency
+* Routines created with the go keyword are called child routines. the main routine is the main program. created when we lauch our program.
+* main routine has higher priority over child routines (we saw the problem when we run our program having introduced the go checkLink(link). main exited befare any of the child routines finished)
+
+### Lecture 73 - Channels
+
+* we run the program with the gor routines. nothing gets printout. (see our last lecture exxplanation)
+* the main routine is the only routine in our program that controls when the program quits
+* what happend is tha it spawned a routine for each link and after having nothing else to do it quitted
+* to solve the problem we introduce the other go feat on parallelism Channels
+* channels is a way to communicate between the running go routines
+* a channel is like any other value in go. they are tight. their data type must be respected by all.
+
+### Lecture 74 - Channel Implementation
